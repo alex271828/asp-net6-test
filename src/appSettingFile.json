@@ -3,5 +3,6 @@
   "logging": {
   },
   "SERVICE_PORT": "8080",
+  "SERVICE_PORT_SSL": "8443",
   "MAX_REQUEST_SIZE_BYTES": "10000"
 }

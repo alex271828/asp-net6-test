@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 namespace AspNet6Test
 {
@@ -15,6 +17,7 @@ namespace AspNet6Test
         static IConfiguration _configuration;
 
         public static int ServicePort = 8080;
+        public static int ServicePortSSL = 8443;
         public static int MaxRequestSize = 10000;
 
         internal static string InstanceName = System.Environment.MachineName;
@@ -45,6 +48,7 @@ namespace AspNet6Test
                     var configuration = appBuilder.Configuration;
 
                     ServicePort = int.Parse(_configuration["SERVICE_PORT"]);
+                    ServicePortSSL = int.Parse(_configuration["SERVICE_PORT_SSL"]);
                     MaxRequestSize = int.Parse(_configuration["MAX_REQUEST_SIZE_BYTES"]);
 
                     services.AddHostedService<ServiceWorker>();
@@ -61,10 +65,44 @@ namespace AspNet6Test
                         options.ListenAnyIP(ServicePort, builder =>
                         {
                         });
+
+                        Console.WriteLine($"SERVICE_PORT={ServicePortSSL}");
+                        options.ListenAnyIP(ServicePortSSL, builder =>
+                        {
+                            builder.UseHttps(GetSelfSignedCertificate());
+                        });
                     });
                 });
         }
 
+        private static X509Certificate2 GetSelfSignedCertificate()
+        {
+            var password = Guid.NewGuid().ToString();
+            var commonName = nameof(AspNet6Test);
+            var rsaKeySize = 2048;
+            var years = 5;
+            var hashAlgorithm = HashAlgorithmName.SHA256;
+
+            using (var rsa = RSA.Create(rsaKeySize))
+            {
+                var request = new CertificateRequest($"cn={commonName}", rsa, hashAlgorithm, RSASignaturePadding.Pkcs1);
+
+                request.CertificateExtensions.Add(
+                  new X509KeyUsageExtension(X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DigitalSignature, false)
+                );
+                request.CertificateExtensions.Add(
+                  new X509EnhancedKeyUsageExtension(
+                    new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") }, false)
+                );
+
+                var certificate = request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(years));
+                //certificate.FriendlyName = commonName;
+
+                // Return the PFX exported version that contains the key
+                return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
+            }
+        }
+         
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             Exit("Console_CancelKeyPress()");
