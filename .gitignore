@@ -1,0 +1,11 @@
+﻿.vs/
+obj/
+bin/
+Debug/
+Release/
+packages/
+App_Data/
+*.user
+*.suo
+*.PublishSettings
+PublishProfiles/

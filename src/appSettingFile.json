@@ -1,0 +1,7 @@
+﻿{
+  "version": "2.0",
+  "logging": {
+  },
+  "SERVICE_PORT": "8080",
+  "MAX_REQUEST_SIZE_BYTES": "10000"
+}
