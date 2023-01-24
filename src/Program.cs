@@ -32,6 +32,7 @@ namespace AspNet6Test
                     configBuilder.Sources.Clear();
                     configBuilder.AddEnvironmentVariables();
                     configBuilder.AddJsonFile("appSettingFile.json", false);
+                    configBuilder.AddJsonFile($"appSettingFile.{Environment.MachineName}.json", true);
 
                     _configuration = configBuilder.Build();
 
@@ -46,6 +47,8 @@ namespace AspNet6Test
                 .ConfigureServices((appBuilder, services) =>
                 {
                     var configuration = appBuilder.Configuration;
+
+                    services.AddHttpClient();
 
                     ServicePort = int.Parse(_configuration["SERVICE_PORT"]);
                     ServicePortSSL = int.Parse(_configuration["SERVICE_PORT_SSL"]);

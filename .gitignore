@@ -9,3 +9,4 @@ App_Data/
 *.suo
 *.PublishSettings
 PublishProfiles/
+appSettingFile.*.json
